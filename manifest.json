@@ -1,0 +1,11 @@
+{
+	"id": "obsidian-highlighter",
+	"name": "Text Highlighter",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Highlight text with customizable background and foreground colors using right-click context menu. Supports predefined colors and up to 10 custom colors.",
+	"author": "Claude Code",
+	"authorUrl": "https://github.com/anthropics/obsidian-highlighter",
+	"fundingUrl": "https://opencollective.com/obsidian-highlighter",
+	"isDesktopOnly": false
+}

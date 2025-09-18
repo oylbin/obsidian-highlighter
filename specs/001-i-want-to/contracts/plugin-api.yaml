@@ -52,9 +52,13 @@ paths:
                 text:
                   type: string
                   description: Text to highlight
-                color:
+                backgroundColor:
                   type: string
-                  description: CSS color value
+                  description: CSS background color value
+                foregroundColor:
+                  type: string
+                  nullable: true
+                  description: CSS text color value (optional)
                 startOffset:
                   type: integer
                   description: Start position in document
@@ -63,7 +67,7 @@ paths:
                   description: End position in document
               required:
                 - text
-                - color
+                - backgroundColor
                 - startOffset
                 - endOffset
       responses:
@@ -206,14 +210,20 @@ components:
           type: string
           minLength: 1
           maxLength: 20
-        value:
+        backgroundColor:
           type: string
           pattern: '^(#[0-9a-fA-F]{3,6}|rgb\(.+\)|[a-z]+)$'
+          description: CSS background color value
+        foregroundColor:
+          type: string
+          nullable: true
+          pattern: '^(#[0-9a-fA-F]{3,6}|rgb\(.+\)|[a-z]+)$'
+          description: CSS text color value (optional)
         isCustom:
           type: boolean
       required:
         - name
-        - value
+        - backgroundColor
         - isCustom
 
     PluginSettings:
@@ -250,9 +260,14 @@ components:
         action:
           type: string
           enum: [highlight, erase]
-        color:
+        backgroundColor:
           type: string
           nullable: true
+          description: Background color for highlight action
+        foregroundColor:
+          type: string
+          nullable: true
+          description: Text color for highlight action
       required:
         - title
         - action

@@ -1,7 +1,7 @@
 # Claude Code Context for Obsidian Text Highlighter
 
 ## Project Overview
-Obsidian plugin that enables text highlighting with colored backgrounds using HTML span tags. Users can right-click selected text to apply predefined or custom colors.
+Obsidian plugin that enables text highlighting with colored backgrounds and optional foreground colors using HTML span tags. Users can right-click selected text to apply predefined or custom colors with both background and text color options.
 
 ## Tech Stack
 - **Language**: TypeScript (strict mode)
@@ -27,10 +27,11 @@ obsidian-highlighter/
 
 ## Key Features
 1. **Context Menu Integration**: Right-click to highlight/erase
-2. **Predefined Colors**: Red, Yellow, Light Green
-3. **Custom Colors**: Up to 10 user-defined colors
+2. **Predefined Colors**: Red (white text), Yellow (black text), Light Green (default text)
+3. **Custom Colors**: Up to 10 user-defined colors with optional foreground
 4. **Smart Selection**: Expands partial highlights automatically
 5. **Reversible Operations**: All highlights can be cleanly removed
+6. **Dual Color Support**: Background and optional foreground colors
 
 ## Implementation Guidelines
 
@@ -42,7 +43,11 @@ obsidian-highlighter/
 
 ### HTML Format
 ```html
-<span style="background-color: [color];">[text]</span>
+<!-- With both background and foreground -->
+<span style="background-color: [bg-color]; color: [fg-color];">[text]</span>
+
+<!-- With background only -->
+<span style="background-color: [bg-color];">[text]</span>
 ```
 
 ### Color Validation
@@ -52,11 +57,20 @@ function isValidColor(color: string): boolean {
   style.color = color;
   return style.color !== '';
 }
+
+// ColorDefinition interface
+interface ColorDefinition {
+  name: string;
+  backgroundColor: string;
+  foregroundColor?: string | null;
+  isCustom: boolean;
+}
 ```
 
 ### Highlight Detection Pattern
 ```typescript
-const pattern = /<span style="background-color:\s*([^;"]+)[^>]*>([^<]*)<\/span>/gi;
+// Handles both background-only and background+foreground patterns
+const pattern = /<span style="background-color:\s*([^;"]+)(?:;\s*color:\s*([^;"]+))?[^>]*>([^<]*)<\/span>/gi;
 ```
 
 ## Testing Approach

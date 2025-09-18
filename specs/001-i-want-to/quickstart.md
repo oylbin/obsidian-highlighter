@@ -41,38 +41,43 @@ The highlighting will be removed, leaving the original text.
 2. **Click "Add Color"** button
 3. **Enter color details**:
    - Name: Display name for the color (e.g., "Ocean Blue")
-   - Value: CSS color value
+   - Background Color: CSS color value (required)
      - Hex: `#006994`
      - RGB: `rgb(0, 105, 148)`
      - Name: `steelblue`
+   - Foreground Color: CSS text color value (optional)
+     - Leave empty to use default text color
+     - Or specify: `#FFFFFF`, `rgb(255, 255, 255)`, `white`
 4. **Click "Save"**
 
 Your custom color will now appear in the context menu.
 
 ## Test Scenarios
 
-### Scenario 1: Basic Highlighting
+### Scenario 1: Basic Highlighting (Background Only)
 ```markdown
 This is a test sentence with important information.
 ```
 1. Select "important information"
 2. Right-click → "Highlight with Yellow"
-3. Result: `This is a test sentence with <span style="background-color: yellow;">important information</span>.`
+3. Result: `This is a test sentence with <span style="background-color: yellow; color: black;">important information</span>.`
 
 ### Scenario 2: Removing Highlight
 1. Click on previously highlighted text
 2. Right-click → "Erase highlight"
 3. Result: Original text restored
 
-### Scenario 3: Custom Color
-1. Add custom color "Purple" (#800080) in settings
+### Scenario 3: Custom Color with Both Background and Foreground
+1. Add custom color "Purple" with:
+   - Background: `#800080`
+   - Foreground: `#FFFFFF`
 2. Select text
 3. Right-click → "Highlight with Purple"
-4. Verify purple background appears
+4. Verify purple background with white text appears
 
 ### Scenario 4: Partial Selection
 ```markdown
-This is <span style="background-color: yellow;">partially highlighted</span> text.
+This is <span style="background-color: yellow; color: black;">partially highlighted</span> text.
 ```
 1. Select "highlighted" (part of the span)
 2. Right-click → "Erase highlight"
@@ -95,10 +100,25 @@ Second paragraph text.
 
 ### Scenario 7: Invalid Color Input
 1. Open settings
-2. Try to add color with value "notacolor"
+2. Try to add color with background value "notacolor"
 3. Should see validation error
 
-### Scenario 8: Duplicate Color Names
+### Scenario 8: Foreground Color Only
+1. Open settings
+2. Add custom color with:
+   - Background: `lightblue`
+   - Foreground: leave empty
+3. Select text and apply
+4. Should see light blue background with default text color
+
+### Scenario 9: High Contrast Colors
+1. Add custom color "High Contrast" with:
+   - Background: `#000000` (black)
+   - Foreground: `#00FF00` (lime green)
+2. Apply to text
+3. Verify black background with lime green text
+
+### Scenario 10: Duplicate Color Names
 1. Add custom color "Blue"
 2. Try to add another color named "Blue"
 3. Should see error about duplicate name

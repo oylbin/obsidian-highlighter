@@ -46,8 +46,17 @@ this.registerEvent(
 
 **HTML Format Decision**:
 ```html
-<span style="background-color: yellow;">highlighted text</span>
+<!-- With both background and foreground colors -->
+<span style="background-color: yellow; color: black;">highlighted text</span>
+
+<!-- With background color only -->
+<span style="background-color: lightblue;">highlighted text</span>
 ```
+
+**Foreground Color Addition**:
+- Users can optionally specify text color along with background
+- If foreground color not specified, browser default is used
+- Improves readability for certain color combinations
 
 ### 3. Settings Management
 
@@ -68,6 +77,13 @@ interface PluginSettings {
   predefinedColors: ColorDefinition[];
   customColors: ColorDefinition[];
   maxCustomColors: number;
+}
+
+interface ColorDefinition {
+  name: string;
+  backgroundColor: string;
+  foregroundColor?: string;
+  isCustom: boolean;
 }
 ```
 
@@ -108,7 +124,8 @@ function isValidColor(color: string): boolean {
 
 **Detection Pattern**:
 ```typescript
-const highlightPattern = /<span style="background-color:\s*([^;"]+)[^>]*>([^<]*)<\/span>/gi;
+// Updated pattern to handle optional foreground color
+const highlightPattern = /<span style="background-color:\s*([^;"]+)(?:;\s*color:\s*([^;"]+))?[^>]*>([^<]*)<\/span>/gi;
 ```
 
 ### 6. Edge Case Handling

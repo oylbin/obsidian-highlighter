@@ -11,21 +11,32 @@ This document defines the data structures and relationships for the Obsidian tex
 
 ### 1. ColorDefinition
 
-**Purpose**: Represents a single highlight color option available to users
+**Purpose**: Represents a single highlight color option available to users with both background and optional foreground colors
 
 **Fields**:
 | Field | Type | Required | Description | Validation |
 |-------|------|----------|-------------|------------|
 | name | string | Yes | Display name for the color | 1-20 characters, alphanumeric + spaces |
-| value | string | Yes | CSS color value | Valid CSS color (hex, rgb, or name) |
+| backgroundColor | string | Yes | CSS background color value | Valid CSS color (hex, rgb, or name) |
+| foregroundColor | string | No | CSS text color value | Valid CSS color or null/undefined |
 | isCustom | boolean | Yes | Whether user-defined or predefined | - |
 
 **Example**:
 ```typescript
+// With both colors
 {
   name: "Yellow",
-  value: "#FFFF00",
+  backgroundColor: "#FFFF00",
+  foregroundColor: "#000000",
   isCustom: false
+}
+
+// Background only
+{
+  name: "Light Blue",
+  backgroundColor: "#ADD8E6",
+  foregroundColor: null,
+  isCustom: true
 }
 ```
 
@@ -45,12 +56,12 @@ This document defines the data structures and relationships for the Obsidian tex
 ```typescript
 {
   predefinedColors: [
-    { name: "Red", value: "red", isCustom: false },
-    { name: "Yellow", value: "yellow", isCustom: false },
-    { name: "Light Green", value: "lightgreen", isCustom: false }
+    { name: "Red", backgroundColor: "red", foregroundColor: "white", isCustom: false },
+    { name: "Yellow", backgroundColor: "yellow", foregroundColor: "black", isCustom: false },
+    { name: "Light Green", backgroundColor: "lightgreen", foregroundColor: null, isCustom: false }
   ],
   customColors: [
-    { name: "Ocean Blue", value: "#006994", isCustom: true }
+    { name: "Ocean Blue", backgroundColor: "#006994", foregroundColor: "#FFFFFF", isCustom: true }
   ],
   maxCustomColors: 10,
   version: "1.0.0"
@@ -65,7 +76,8 @@ This document defines the data structures and relationships for the Obsidian tex
 | Field | Type | Required | Description | Validation |
 |-------|------|----------|-------------|------------|
 | text | string | Yes | The highlighted text content | Non-empty |
-| color | string | Yes | Applied background color | Valid CSS color |
+| backgroundColor | string | Yes | Applied background color | Valid CSS color |
+| foregroundColor | string | No | Applied text color | Valid CSS color or null |
 | startOffset | number | Yes | Start position in document | >= 0 |
 | endOffset | number | Yes | End position in document | > startOffset |
 
@@ -84,13 +96,15 @@ erDiagram
     }
     ColorDefinition {
         string name
-        string value
+        string backgroundColor
+        string foregroundColor
         boolean isCustom
     }
     Document ||--o{ HighlightedSegment : "derives from"
     HighlightedSegment {
         string text
-        string color
+        string backgroundColor
+        string foregroundColor
         number startOffset
         number endOffset
     }
@@ -115,10 +129,13 @@ erDiagram
 
 ### ColorDefinition Validation
 - `name`: Required, 1-20 characters, no special characters except spaces
-- `value`: Must be valid CSS color format
+- `backgroundColor`: Required, must be valid CSS color format
   - Hex: `#RGB` or `#RRGGBB`
   - RGB: `rgb(r, g, b)` or `rgba(r, g, b, a)`
   - Named: Valid CSS color name
+- `foregroundColor`: Optional, if provided must be valid CSS color format
+  - Same formats as backgroundColor
+  - Can be null or undefined
 - `isCustom`: Must be `false` for predefined, `true` for user-defined
 
 ### PluginSettings Validation
@@ -130,7 +147,8 @@ erDiagram
 
 ### HighlightedSegment Validation
 - `text`: Non-empty string
-- `color`: Valid CSS color that exists in settings
+- `backgroundColor`: Valid CSS color that exists in settings
+- `foregroundColor`: Valid CSS color or null
 - `startOffset`: Non-negative integer
 - `endOffset`: Greater than startOffset
 - No overlapping segments (enforced by business logic)
@@ -146,13 +164,13 @@ Example file content:
 ```json
 {
   "predefinedColors": [
-    {"name": "Red", "value": "red", "isCustom": false},
-    {"name": "Yellow", "value": "yellow", "isCustom": false},
-    {"name": "Light Green", "value": "lightgreen", "isCustom": false}
+    {"name": "Red", "backgroundColor": "red", "foregroundColor": "white", "isCustom": false},
+    {"name": "Yellow", "backgroundColor": "yellow", "foregroundColor": "black", "isCustom": false},
+    {"name": "Light Green", "backgroundColor": "lightgreen", "foregroundColor": null, "isCustom": false}
   ],
   "customColors": [
-    {"name": "Ocean Blue", "value": "#006994", "isCustom": true},
-    {"name": "Sunset Orange", "value": "#ff6b35", "isCustom": true}
+    {"name": "Ocean Blue", "backgroundColor": "#006994", "foregroundColor": "#FFFFFF", "isCustom": true},
+    {"name": "Sunset Orange", "backgroundColor": "#ff6b35", "foregroundColor": null, "isCustom": true}
   ],
   "maxCustomColors": 10,
   "version": "1.0.0"

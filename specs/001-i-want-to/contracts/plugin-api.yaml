@@ -1,0 +1,268 @@
+openapi: 3.0.0
+info:
+  title: Obsidian Text Highlighter Plugin API
+  description: Internal API contracts for the text highlighter plugin
+  version: 1.0.0
+
+paths:
+  /context-menu:
+    post:
+      summary: Register context menu items
+      operationId: registerContextMenu
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                selectedText:
+                  type: string
+                  description: Currently selected text in editor
+                hasHighlight:
+                  type: boolean
+                  description: Whether selection contains existing highlight
+              required:
+                - selectedText
+                - hasHighlight
+      responses:
+        '200':
+          description: Menu items registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  menuItems:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MenuItem'
+
+  /highlight/apply:
+    post:
+      summary: Apply highlight to selected text
+      operationId: applyHighlight
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  description: Text to highlight
+                color:
+                  type: string
+                  description: CSS color value
+                startOffset:
+                  type: integer
+                  description: Start position in document
+                endOffset:
+                  type: integer
+                  description: End position in document
+              required:
+                - text
+                - color
+                - startOffset
+                - endOffset
+      responses:
+        '200':
+          description: Highlight applied successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  html:
+                    type: string
+                    description: Generated HTML with span tag
+                  success:
+                    type: boolean
+
+  /highlight/remove:
+    post:
+      summary: Remove highlight from selected text
+      operationId: removeHighlight
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                startOffset:
+                  type: integer
+                  description: Start position of highlight
+                endOffset:
+                  type: integer
+                  description: End position of highlight
+              required:
+                - startOffset
+                - endOffset
+      responses:
+        '200':
+          description: Highlight removed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  text:
+                    type: string
+                    description: Plain text without highlighting
+                  success:
+                    type: boolean
+
+  /settings:
+    get:
+      summary: Get plugin settings
+      operationId: getSettings
+      responses:
+        '200':
+          description: Current plugin settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginSettings'
+
+    put:
+      summary: Update plugin settings
+      operationId: updateSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginSettings'
+      responses:
+        '200':
+          description: Settings updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '400':
+          description: Invalid settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /settings/colors/custom:
+    post:
+      summary: Add custom color
+      operationId: addCustomColor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ColorDefinition'
+      responses:
+        '201':
+          description: Custom color added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  color:
+                    $ref: '#/components/schemas/ColorDefinition'
+                  success:
+                    type: boolean
+        '400':
+          description: Invalid color or limit reached
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Remove custom color
+      operationId: removeCustomColor
+      parameters:
+        - name: colorName
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Name of color to remove
+      responses:
+        '200':
+          description: Color removed successfully
+        '404':
+          description: Color not found
+
+components:
+  schemas:
+    ColorDefinition:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 20
+        value:
+          type: string
+          pattern: '^(#[0-9a-fA-F]{3,6}|rgb\(.+\)|[a-z]+)$'
+        isCustom:
+          type: boolean
+      required:
+        - name
+        - value
+        - isCustom
+
+    PluginSettings:
+      type: object
+      properties:
+        predefinedColors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ColorDefinition'
+          minItems: 3
+          maxItems: 3
+        customColors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ColorDefinition'
+          maxItems: 10
+        maxCustomColors:
+          type: integer
+          const: 10
+        version:
+          type: string
+          pattern: '^\d+\.\d+\.\d+$'
+      required:
+        - predefinedColors
+        - customColors
+        - maxCustomColors
+        - version
+
+    MenuItem:
+      type: object
+      properties:
+        title:
+          type: string
+        action:
+          type: string
+          enum: [highlight, erase]
+        color:
+          type: string
+          nullable: true
+      required:
+        - title
+        - action
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        details:
+          type: string
+      required:
+        - error

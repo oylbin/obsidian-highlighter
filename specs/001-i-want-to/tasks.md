@@ -36,37 +36,37 @@
 - **Tests**: Manual testing via Obsidian Developer Console
 
 ## Phase 3.1: Setup
-- [ ] T001 Initialize Obsidian plugin structure with package.json and dependencies
-- [ ] T002 [P] Create TypeScript configuration in tsconfig.json with strict mode
-- [ ] T003 [P] Configure esbuild in esbuild.config.mjs for plugin bundling
-- [ ] T004 [P] Create plugin manifest in manifest.json with metadata
+- [x] T001 Initialize Obsidian plugin structure with package.json and dependencies
+- [x] T002 [P] Create TypeScript configuration in tsconfig.json with strict mode
+- [x] T003 [P] Configure esbuild in esbuild.config.mjs for plugin bundling
+- [x] T004 [P] Create plugin manifest in manifest.json with metadata
 
 ## Phase 3.2: Core Types & Interfaces
 **CRITICAL: Define types first for TypeScript strict mode**
-- [ ] T005 Create type definitions in src/types.ts for ColorDefinition, PluginSettings, HighlightedSegment
-- [ ] T006 [P] Create default plugin settings constants in src/constants.ts
+- [x] T005 Create type definitions in src/types.ts for ColorDefinition, PluginSettings, HighlightedSegment
+- [x] T006 [P] Create default plugin settings constants in src/constants.ts
 
 ## Phase 3.3: Core Implementation
-- [ ] T007 Implement settings management in src/settings.ts with PluginSettingTab class
-- [ ] T008 Implement highlight logic in src/highlighter.ts with apply/remove/detect functions
-- [ ] T009 Create color validation utilities in src/utils/validation.ts
-- [ ] T010 Implement main plugin class in src/main.ts with onload/onunload
+- [x] T007 Implement settings management in src/settings.ts with PluginSettingTab class
+- [x] T008 Implement highlight logic in src/highlighter.ts with apply/remove/detect functions
+- [x] T009 Create color validation utilities in src/utils/validation.ts
+- [x] T010 Implement main plugin class in src/main.ts with onload/onunload
 
 ## Phase 3.4: UI Integration
-- [ ] T011 Add context menu integration in src/main.ts for editor-menu event
-- [ ] T012 Implement settings UI components in src/settings.ts with color inputs
-- [ ] T013 Add custom color management in src/settings.ts with add/remove/edit
-- [ ] T014 [P] Create plugin styles in styles.css for settings UI
+- [x] T011 Add context menu integration in src/main.ts for editor-menu event
+- [x] T012 Implement settings UI components in src/settings.ts with color inputs
+- [x] T013 Add custom color management in src/settings.ts with add/remove/edit
+- [x] T014 [P] Create plugin styles in styles.css for settings UI
 
 ## Phase 3.5: Edge Cases & Polish
-- [ ] T015 Handle partial highlight selection in src/highlighter.ts
-- [ ] T016 Prevent nested highlights in src/highlighter.ts validation
-- [ ] T017 Add color limit enforcement (max 10) in src/settings.ts
-- [ ] T018 Implement settings migration in src/settings.ts for future updates
-- [ ] T019 Add error handling and user notifications in src/main.ts
+- [x] T015 Handle partial highlight selection in src/highlighter.ts
+- [x] T016 Prevent nested highlights in src/highlighter.ts validation
+- [x] T017 Add color limit enforcement (max 10) in src/settings.ts
+- [x] T018 Implement settings migration in src/settings.ts for future updates
+- [x] T019 Add error handling and user notifications in src/main.ts
 
 ## Phase 3.6: Build & Validation
-- [ ] T020 Build plugin with npm run build and verify output files
+- [x] T020 Build plugin with npm run build and verify output files
 - [ ] T021 Test Scenario 1: Basic highlighting with predefined colors
 - [ ] T022 Test Scenario 2: Custom color with foreground and background
 - [ ] T023 Test Scenario 3: Partial selection and highlight removal

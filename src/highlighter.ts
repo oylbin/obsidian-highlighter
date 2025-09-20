@@ -194,8 +194,28 @@ export function toggleHighlight(
 } {
 	const processed = processSelectionForHighlight(fullText, selectionStart, selectionEnd);
 
-	if (processed.containsHighlight) {
-		// Remove existing highlight
+	if (processed.containsHighlight && color) {
+		// Replace existing highlight with new color
+		const beforeSelection = fullText.substring(0, processed.expandedStart);
+		const afterSelection = fullText.substring(processed.expandedEnd);
+
+		// First remove the old highlight to get plain text
+		const plainText = removeHighlight(processed.selectedText);
+
+		// Then apply the new highlight with the new color
+		const highlightedText = applyHighlight(plainText, { color });
+		const newText = beforeSelection + highlightedText + afterSelection;
+
+		return {
+			newText,
+			action: 'applied',
+			affectedRange: {
+				start: processed.expandedStart,
+				end: processed.expandedStart + highlightedText.length
+			}
+		};
+	} else if (processed.containsHighlight && !color) {
+		// Remove existing highlight (no new color provided)
 		const beforeSelection = fullText.substring(0, processed.expandedStart);
 		const afterSelection = fullText.substring(processed.expandedEnd);
 		const plainText = removeHighlight(processed.selectedText);
@@ -210,8 +230,8 @@ export function toggleHighlight(
 				end: processed.expandedStart + plainText.length
 			}
 		};
-	} else if (color) {
-		// Apply new highlight
+	} else if (!processed.containsHighlight && color) {
+		// Apply new highlight (no existing highlight)
 		const beforeSelection = fullText.substring(0, processed.expandedStart);
 		const afterSelection = fullText.substring(processed.expandedEnd);
 

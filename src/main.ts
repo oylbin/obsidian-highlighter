@@ -78,6 +78,20 @@ export default class HighlighterPlugin extends Plugin {
 		// Process the selection to understand its state
 		const processed = processSelectionForHighlight(fullText, selectionStart, selectionEnd);
 
+		// Add highlight options for each available color
+		const allColors = this.settingsManager.getAllColors();
+
+		allColors.forEach(color => {
+			menu.addItem(item => {
+				const title = `${MENU_LABELS.highlightWith} ${color.name}`;
+				item.setTitle(title)
+					.setIcon('highlighter')
+					.onClick(() => {
+						this.applyHighlight(editor, selectionStart, selectionEnd, color);
+					});
+			});
+		});
+		
 		if (processed.containsHighlight) {
 			// Add "Erase highlight" option
 			menu.addItem(item => {
@@ -88,19 +102,7 @@ export default class HighlighterPlugin extends Plugin {
 					});
 			});
 		} else {
-			// Add highlight options for each available color
-			const allColors = this.settingsManager.getAllColors();
 
-			allColors.forEach(color => {
-				menu.addItem(item => {
-					const title = `${MENU_LABELS.highlightWith} ${color.name}`;
-					item.setTitle(title)
-						.setIcon('highlighter')
-						.onClick(() => {
-							this.applyHighlight(editor, selectionStart, selectionEnd, color);
-						});
-				});
-			});
 		}
 	}
 

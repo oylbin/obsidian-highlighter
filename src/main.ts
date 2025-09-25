@@ -123,9 +123,10 @@ export default class HighlighterPlugin extends Plugin {
 				// Update the editor content
 				editor.setValue(result.newText);
 
-				// Restore cursor position
-				const newCursorPos = editor.offsetToPos(result.affectedRange.end);
-				editor.setCursor(newCursorPos);
+				// Select the affected text
+				const startPos = editor.offsetToPos(result.affectedRange.start);
+				const endPos = editor.offsetToPos(result.affectedRange.end);
+				editor.setSelection(startPos, endPos);
 
 				// Show success notice
 				new Notice(`Applied ${color.name} highlight`);
@@ -152,11 +153,12 @@ export default class HighlighterPlugin extends Plugin {
 				// Update the editor content
 				editor.setValue(result.newText);
 
-				// Restore cursor position
-				const newCursorPos = editor.offsetToPos(result.affectedRange.end);
-				editor.setCursor(newCursorPos);
+				// Select the affected text
+				const startPos = editor.offsetToPos(result.affectedRange.start);
+				const endPos = editor.offsetToPos(result.affectedRange.end);
+				editor.setSelection(startPos, endPos);
 
-				// Show success notice
+				// Show success notice 
 				new Notice('Highlight removed');
 			}
 		} catch (error) {

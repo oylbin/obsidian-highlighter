@@ -93,20 +93,40 @@ const pattern = /<span style="background-color:\s*([^;"]+)(?:;\s*color:\s*([^;"]
 - [ ] Implementation pending
 - [ ] Testing pending
 
+## DevOps Workflow
+
+This project uses a **standardized containerized DevOps workflow**. All build / lint / fmt / test commands run inside a Docker dev container — never on the host. The `Makefile` is a thin protocol layer; all real logic lives in `dev.sh`.
+
+**Always use `make` targets — do not invoke `npm` or `node` directly on the host.**
+
 ## Common Commands
 ```bash
-# Install dependencies
-npm install
+# One-time setup
+cp .env.example .env       # set VAULT_PLUGIN_PATH
+make doctor                # check docker / compose / .env
+make up                    # start dev container
+make deps                  # npm install (in container)
 
-# Build plugin
-npm run build
+# Daily workflow
+make watch                 # esbuild watch mode
+make install               # deploy to $VAULT_PLUGIN_PATH
+make build                 # production build
+make fmt                   # prettier
+make lint                  # eslint
+make test                  # tsc --noEmit (type check)
+make artifacts             # verify main.js / styles.css / manifest.json
 
-# Development build with watch
-npm run dev
+# Container lifecycle
+make shell                 # enter the dev container
+make logs                  # tail container logs
+make down                  # stop container
+make clean                 # remove main.js (use --all to also drop node_modules volume)
 
-# Install to test vault
-cp main.js styles.css manifest.json /path/to/vault/.obsidian/plugins/obsidian-highlighter/
+# Release
+make release VERSION=1.1.0 # bump + commit + tag (does NOT push)
 ```
+
+Run `make help` to see all available targets.
 
 ## Edge Cases to Handle
 1. **Partial Highlight Selection**: Expand to full highlight

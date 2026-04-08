@@ -1,0 +1,10 @@
+node_modules
+main.js
+lib
+.git
+.gitignore
+.env
+specs
+.claude
+.specify
+*.md

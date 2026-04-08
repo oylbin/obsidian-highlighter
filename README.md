@@ -109,26 +109,55 @@ The plugin works seamlessly on Obsidian mobile:
 
 ## 🛠️ Development
 
-### Prerequisites
-- Node.js 16+
-- TypeScript
-- Obsidian (for testing)
+This project follows the **standardized DevOps Makefile** convention used across our projects: a thin `Makefile` defines stable target names, and all real logic lives in `dev.sh`. **Everything runs inside a Docker dev container** — you do not need Node.js, npm, or any toolchain installed on your host.
 
-### Setup
+### Prerequisites
+- Docker (Docker Desktop on Windows/macOS, or docker engine + compose v2 on Linux)
+- `bash` and `make` (already available on macOS, Linux, and Windows MINGW64 / Git Bash)
+- Obsidian (for manual testing)
+
+### One-time setup
 ```bash
 git clone https://github.com/anthropics/obsidian-highlighter.git
 cd obsidian-highlighter
-npm install
-npm run build
+
+cp .env.example .env       # then edit VAULT_PLUGIN_PATH to point at your test vault
+make doctor                # verifies docker / compose / .env
+make up                    # starts the dev container
+make deps                  # npm install (inside the container)
 ```
 
-### Scripts
-- `npm run build` - Build for production
-- `npm run dev` - Build with watch mode
-- `npm run lint` - Run ESLint
-- `npm run format` - Format with Prettier
+### Daily workflow
+```bash
+make watch                 # esbuild watch mode (Ctrl+C to stop)
+make install               # copy main.js / styles.css / manifest.json to your test vault
+                           # then reload Obsidian (Ctrl+R) to pick up changes
 
-See [INSTALLATION.md](INSTALLATION.md) for detailed development setup.
+make fmt                   # prettier
+make lint                  # eslint
+make test                  # tsc --noEmit (type check)
+make build                 # one-shot production build
+make artifacts             # verify the three plugin files are present
+```
+
+### All available targets
+Run `make help` to see the full list. The most common ones:
+
+| Target | Purpose |
+|---|---|
+| `make doctor` | Check docker / compose / `.env` |
+| `make up` / `make down` | Start / stop the dev container |
+| `make shell` | Open a shell inside the dev container |
+| `make deps` | `npm install` inside the container |
+| `make build` | Production build (esbuild) |
+| `make watch` | Watch-mode rebuild |
+| `make lint` / `make fmt` | eslint / prettier |
+| `make test` | TypeScript type check |
+| `make install` | Deploy artifacts to `$VAULT_PLUGIN_PATH` |
+| `make clean` | Remove `main.js` (`make clean --all` also drops `node_modules` volume) |
+| `make release VERSION=1.1.0` | Bump version, commit, and tag |
+
+See [INSTALLATION.md](INSTALLATION.md) for detailed setup notes and troubleshooting.
 
 ## 🎯 Roadmap
 

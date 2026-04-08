@@ -29,10 +29,13 @@ This plugin is not yet available in the official Obsidian Community Plugins stor
 
 ## For Developers
 
+This project uses a **containerized DevOps workflow**: a `Makefile` provides stable command names, `dev.sh` carries the logic, and everything runs inside a Docker dev container. You do **not** need Node.js or npm on your host.
+
 ### Prerequisites
-- Node.js (v16 or higher)
-- npm
-- Git
+- **Docker** (Docker Desktop on Windows/macOS, or docker engine + compose v2 on Linux)
+- **bash** and **make** (preinstalled on macOS/Linux; on Windows use Git Bash / MINGW64)
+- **Git**
+- **Obsidian** (for manual testing in a vault)
 
 ### Building from Source
 
@@ -42,55 +45,83 @@ This plugin is not yet available in the official Obsidian Community Plugins stor
    cd obsidian-highlighter
    ```
 
-2. **Install dependencies**:
+2. **Configure your test vault**:
    ```bash
-   npm install
+   cp .env.example .env
+   # Edit .env and set VAULT_PLUGIN_PATH to your Obsidian test vault's plugin folder.
+   # Example (Windows MINGW64):
+   #   VAULT_PLUGIN_PATH=/c/Users/me/ObsidianVault/.obsidian/plugins/obsidian-highlighter
    ```
 
-3. **Build the plugin**:
+3. **Verify your environment**:
    ```bash
-   npm run build
+   make doctor
    ```
 
-4. **Development mode** (auto-rebuild on changes):
+4. **Start the dev container and install dependencies**:
    ```bash
-   npm run dev
+   make up
+   make deps
    ```
 
-### Development Setup
-
-1. **Create a test vault**:
-   - Create a new Obsidian vault for testing
-   - This prevents affecting your main vault during development
-
-2. **Link the plugin**:
+5. **Build the plugin**:
    ```bash
-   # From the project directory
-   mkdir -p /path/to/test-vault/.obsidian/plugins/obsidian-highlighter
-   cp main.js styles.css manifest.json /path/to/test-vault/.obsidian/plugins/obsidian-highlighter/
+   make build
    ```
 
-3. **Enable developer mode**:
-   - In Obsidian Settings → Community plugins
-   - Enable "Developer mode"
-   - Enable the "Text Highlighter" plugin
+6. **Deploy to your test vault**:
+   ```bash
+   make install
+   ```
+   Then reload Obsidian (`Ctrl+R` / `Cmd+R`) to load the new build.
 
-4. **Debug with DevTools**:
-   - Press `Ctrl+Shift+I` (or `Cmd+Opt+I` on Mac) to open Developer Console
-   - Check for any errors or log messages
+### Development Loop
+
+The fastest iteration loop is:
+
+```bash
+make watch          # Terminal A: esbuild rebuilds on every change
+make install        # Terminal B: deploy after a change; reload Obsidian
+```
+
+Other useful commands:
+
+```bash
+make fmt            # prettier
+make lint           # eslint
+make test           # tsc --noEmit (type check)
+make artifacts      # verify the three plugin files exist
+make shell          # open a shell inside the dev container
+make logs           # tail dev container logs
+make down           # stop the dev container
+```
+
+### Optional: Host-side `npm install` for IDE type completion
+
+The dev container's `node_modules` lives in a Docker named volume so it's invisible to your IDE. If you want type completion / "go to definition" in VS Code etc., you may optionally run `npm install` on the host as well:
+
+```bash
+npm install         # only for IDE; build still happens in the container
+```
+
+This is **purely optional** — builds, lint, format and tests all run in the container.
 
 ### File Structure
 
-After building, your plugin directory should contain:
+After building, your project directory will contain:
 
 ```
 obsidian-highlighter/
-├── main.js          # Bundled plugin code
-├── styles.css       # Plugin styles
-├── manifest.json    # Plugin metadata
-├── src/             # Source code (TypeScript)
-├── package.json     # Node.js dependencies
-└── tsconfig.json    # TypeScript configuration
+├── Makefile             # Standardized DevOps targets
+├── dev.sh               # Logic behind the Makefile
+├── docker-compose.yml   # Dev container definition
+├── .env.example         # Sample env file (VAULT_PLUGIN_PATH)
+├── main.js              # Bundled plugin code (build output)
+├── styles.css           # Plugin styles
+├── manifest.json        # Plugin metadata
+├── src/                 # TypeScript source
+├── package.json         # Node.js dependencies
+└── tsconfig.json        # TypeScript configuration
 ```
 
 ## Troubleshooting
@@ -106,9 +137,10 @@ obsidian-highlighter/
 - Check the Developer Console for any error messages
 
 ### Build errors
-- Ensure Node.js version is 16 or higher: `node --version`
-- Clear node_modules and reinstall: `rm -rf node_modules package-lock.json && npm install`
-- Check for TypeScript errors: `npx tsc --noEmit`
+- Verify Docker is running: `docker info`
+- Verify the dev container is healthy: `make status`
+- Re-create the dev container from scratch: `make clean --all && make up && make deps`
+- Check for TypeScript errors: `make test`
 
 ### Settings not saving
 - Check file permissions on the `.obsidian/plugins/` directory

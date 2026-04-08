@@ -1,0 +1,26 @@
+# -----------------------------------------------------------------------------
+# Obsidian Highlighter — local dev container
+#
+# Long-lived "execution environment" container. It does not run a service;
+# instead, every make target uses `docker compose exec dev <cmd>` to run
+# lint / format / build / tsc inside it.
+#
+# - node_modules lives in a named volume to avoid Windows host bind-mount
+#   I/O penalty for many small files.
+# - The project source is bind-mounted at /app so that build artifacts
+#   (main.js) appear on the host immediately for `make install`.
+# -----------------------------------------------------------------------------
+
+services:
+  dev:
+    image: node:20-alpine
+    container_name: obsidian-highlighter-dev
+    working_dir: /app
+    init: true
+    volumes:
+      - .:/app
+      - obsidian_highlighter_node_modules:/app/node_modules
+    command: ["tail", "-f", "/dev/null"]
+
+volumes:
+  obsidian_highlighter_node_modules:

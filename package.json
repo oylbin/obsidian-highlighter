@@ -4,8 +4,8 @@
   "description": "Obsidian plugin for highlighting text with customizable background and foreground colors",
   "main": "main.js",
   "scripts": {
-    "build": "esbuild src/main.ts --bundle --platform=neutral --target=es2018 --format=cjs --outfile=main.js --external:obsidian --external:electron",
-    "dev": "npm run build -- --watch",
+    "build": "node esbuild.config.mjs production",
+    "dev": "node esbuild.config.mjs",
     "lint": "eslint src --ext .ts --fix",
     "format": "prettier --write src"
   },
@@ -22,6 +22,7 @@
     "@types/node": "^16.11.6",
     "@typescript-eslint/eslint-plugin": "^5.29.0",
     "@typescript-eslint/parser": "^5.29.0",
+    "builtin-modules": "^3.3.0",
     "esbuild": "0.17.3",
     "eslint": "^8.18.0",
     "obsidian": "latest",

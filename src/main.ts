@@ -183,24 +183,9 @@ export default class HighlighterPlugin extends Plugin {
 			}
 		});
 
-		// Commands for each predefined color
-		this.settings.predefinedColors.forEach((color, index) => {
-			this.addCommand({
-				id: `highlight-${color.name.toLowerCase().replace(/\s+/g, '-')}`,
-				name: `Highlight with ${color.name}`,
-				editorCallback: (editor: Editor, view: MarkdownView | MarkdownFileInfo) => {
-					const selection = editor.getSelection();
-					if (!selection) {
-						new Notice(ERROR_MESSAGES.selectionRequired);
-						return;
-					}
-
-					const selectionStart = editor.posToOffset(editor.getCursor('from'));
-					const selectionEnd = editor.posToOffset(editor.getCursor('to'));
-
-					this.applyHighlight(editor, selectionStart, selectionEnd, color);
-				}
-			});
+		// Unified entry: register a command for every color (predefined + custom)
+		this.settingsManager.getAllColors().forEach(color => {
+			this.registerHighlightCommand(color);
 		});
 
 		// Command to remove highlight
@@ -220,6 +205,59 @@ export default class HighlighterPlugin extends Plugin {
 				this.removeHighlight(editor, selectionStart, selectionEnd);
 			}
 		});
+	}
+
+	/**
+	 * Build the (un-prefixed) command id for a given color.
+	 * The format must stay stable across plugin reloads so that hotkey
+	 * bindings stored in Obsidian's hotkeys.json keep working when a
+	 * custom color is removed and re-added with the same name.
+	 */
+	private getColorCommandId(color: ColorDefinition): string {
+		return `highlight-${color.name.toLowerCase().replace(/\s+/g, '-')}`;
+	}
+
+	/**
+	 * Register a single highlight command for the given color.
+	 * Called from onload (for all existing colors) and from the settings
+	 * tab whenever a new custom color is added at runtime.
+	 */
+	registerHighlightCommand(color: ColorDefinition): void {
+		this.addCommand({
+			id: this.getColorCommandId(color),
+			name: `Highlight with ${color.name}`,
+			editorCallback: (editor: Editor, view: MarkdownView | MarkdownFileInfo) => {
+				const selection = editor.getSelection();
+				if (!selection) {
+					new Notice(ERROR_MESSAGES.selectionRequired);
+					return;
+				}
+
+				const selectionStart = editor.posToOffset(editor.getCursor('from'));
+				const selectionEnd = editor.posToOffset(editor.getCursor('to'));
+
+				this.applyHighlight(editor, selectionStart, selectionEnd, color);
+			}
+		});
+	}
+
+	/**
+	 * Unregister the highlight command for the given color.
+	 * Uses Obsidian's internal app.commands.removeCommand API which is
+	 * not part of the public typings but is widely used by community
+	 * plugins. The defensive checks ensure that an API change here can
+	 * only leave a "zombie" command (cleared on next reload), never crash.
+	 */
+	unregisterHighlightCommand(color: ColorDefinition): void {
+		const fullId = `${this.manifest.id}:${this.getColorCommandId(color)}`;
+		const commands = (this.app as any).commands;
+		if (commands && typeof commands.removeCommand === 'function') {
+			try {
+				commands.removeCommand(fullId);
+			} catch (error) {
+				console.warn(`Failed to unregister command ${fullId}:`, error);
+			}
+		}
 	}
 
 	/**

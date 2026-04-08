@@ -203,8 +203,12 @@ export class HighlighterSettingTab extends PluginSettingTab {
 		}
 
 		// Add the color
-		this.plugin.settings.customColors.push(newColor as ColorDefinition);
+		const colorToAdd = newColor as ColorDefinition;
+		this.plugin.settings.customColors.push(colorToAdd);
 		await this.plugin.saveSettings();
+
+		// Register the hotkey command so it shows up in Obsidian's Hotkeys page
+		this.plugin.registerHighlightCommand(colorToAdd);
 
 		// Refresh the settings display
 		this.display();
@@ -212,8 +216,15 @@ export class HighlighterSettingTab extends PluginSettingTab {
 
 	private async deleteCustomColor(index: number): Promise<void> {
 		if (index >= 0 && index < this.plugin.settings.customColors.length) {
+			// Capture before splice so we can unregister the matching command
+			const removed = this.plugin.settings.customColors[index];
 			this.plugin.settings.customColors.splice(index, 1);
 			await this.plugin.saveSettings();
+
+			// Unregister the hotkey command for the removed color
+			if (removed) {
+				this.plugin.unregisterHighlightCommand(removed);
+			}
 
 			// Refresh the settings display
 			this.display();

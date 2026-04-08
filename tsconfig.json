@@ -24,8 +24,7 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noUncheckedSideEffectImports": true
+    "noPropertyAccessFromIndexSignature": true
   },
   "include": [
     "src/**/*.ts"

@@ -2,7 +2,7 @@
  * Main plugin class for Obsidian Text Highlighter
  */
 
-import { Plugin, Editor, MarkdownView, Menu, Notice } from 'obsidian';
+import { Plugin, Editor, MarkdownView, MarkdownFileInfo, Menu, Notice } from 'obsidian';
 import { PluginSettings, ColorDefinition, HighlightMenuItem } from './types';
 import { DEFAULT_SETTINGS, MENU_LABELS, ERROR_MESSAGES } from './constants';
 import { HighlighterSettingTab, SettingsManager } from './settings';
@@ -14,10 +14,10 @@ import {
 } from './highlighter';
 
 export default class HighlighterPlugin extends Plugin {
-	settings: PluginSettings;
-	settingsManager: SettingsManager;
+	settings!: PluginSettings;
+	settingsManager!: SettingsManager;
 
-	async onload(): Promise<void> {
+	override async onload(): Promise<void> {
 		console.log('Loading Text Highlighter plugin');
 
 		// Initialize settings manager
@@ -38,7 +38,7 @@ export default class HighlighterPlugin extends Plugin {
 		console.log('Text Highlighter plugin loaded successfully');
 	}
 
-	onunload(): void {
+	override onunload(): void {
 		console.log('Unloading Text Highlighter plugin');
 	}
 
@@ -54,7 +54,7 @@ export default class HighlighterPlugin extends Plugin {
 	 */
 	private registerContextMenuEvent(): void {
 		this.registerEvent(
-			this.app.workspace.on('editor-menu', (menu: Menu, editor: Editor, view: MarkdownView) => {
+			this.app.workspace.on('editor-menu', (menu: Menu, editor: Editor, view: MarkdownView | MarkdownFileInfo) => {
 				this.addContextMenuItems(menu, editor, view);
 			})
 		);
@@ -63,7 +63,7 @@ export default class HighlighterPlugin extends Plugin {
 	/**
 	 * Add context menu items based on current selection
 	 */
-	private addContextMenuItems(menu: Menu, editor: Editor, view: MarkdownView): void {
+	private addContextMenuItems(menu: Menu, editor: Editor, view: MarkdownView | MarkdownFileInfo): void {
 		const selection = editor.getSelection();
 
 		if (!selection) {
@@ -188,7 +188,7 @@ export default class HighlighterPlugin extends Plugin {
 			this.addCommand({
 				id: `highlight-${color.name.toLowerCase().replace(/\s+/g, '-')}`,
 				name: `Highlight with ${color.name}`,
-				editorCallback: (editor: Editor, view: MarkdownView) => {
+				editorCallback: (editor: Editor, view: MarkdownView | MarkdownFileInfo) => {
 					const selection = editor.getSelection();
 					if (!selection) {
 						new Notice(ERROR_MESSAGES.selectionRequired);
@@ -207,7 +207,7 @@ export default class HighlighterPlugin extends Plugin {
 		this.addCommand({
 			id: 'remove-highlight',
 			name: 'Remove highlight',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
+			editorCallback: (editor: Editor, view: MarkdownView | MarkdownFileInfo) => {
 				const selection = editor.getSelection();
 				if (!selection) {
 					new Notice(ERROR_MESSAGES.selectionRequired);

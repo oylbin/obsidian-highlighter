@@ -38,14 +38,20 @@ export function detectHighlight(text: string): HighlightDetectionResult {
 		return { found: false };
 	}
 
-	const [fullMatch, backgroundColor, foregroundColor, innerText] = match;
-	const startOffset = match.index || 0;
+	// Capture groups 1 (background-color) and 3 (inner text) are required by
+	// HIGHLIGHT_PATTERN, so they are always defined when a match succeeds.
+	// Group 2 (foreground color) is optional → may be undefined.
+	const fullMatch = match[0]!;
+	const backgroundColor = match[1]!;
+	const foregroundColor = match[2];
+	const innerText = match[3]!;
+	const startOffset = match.index;
 	const endOffset = startOffset + fullMatch.length;
 
 	const segment: HighlightedSegment = {
 		text: innerText,
 		backgroundColor,
-		foregroundColor: foregroundColor || null,
+		foregroundColor: foregroundColor ?? null,
 		startOffset,
 		endOffset
 	};
@@ -73,8 +79,8 @@ export function expandSelection(text: string, start: number, end: number): [numb
 
 	while ((match = HIGHLIGHT_PATTERN.exec(text)) !== null) {
 		highlights.push({
-			start: match.index || 0,
-			end: (match.index || 0) + match[0].length
+			start: match.index,
+			end: match.index + match[0]!.length
 		});
 	}
 

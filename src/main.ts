@@ -10,15 +10,18 @@ import {
 	toggleHighlight,
 	processSelectionForHighlight,
 	findMatchingColor,
-	detectHighlight
+	detectHighlight,
+	HighlightToggleResult
 } from './highlighter';
+import { resolveEditorSelection } from './utils/editor-resolver';
+import { logInfo, logError } from './utils/logger';
 
 export default class HighlighterPlugin extends Plugin {
 	settings!: PluginSettings;
 	settingsManager!: SettingsManager;
 
 	override async onload(): Promise<void> {
-		console.log('Loading Text Highlighter plugin');
+		logInfo('Loading Text Highlighter plugin');
 
 		// Initialize settings manager
 		this.settingsManager = new SettingsManager(this);
@@ -35,11 +38,11 @@ export default class HighlighterPlugin extends Plugin {
 		// Register commands for command palette (optional)
 		this.registerCommands();
 
-		console.log('Text Highlighter plugin loaded successfully');
+		logInfo('Text Highlighter plugin loaded successfully');
 	}
 
 	override onunload(): void {
-		console.log('Unloading Text Highlighter plugin');
+		logInfo('Unloading Text Highlighter plugin');
 	}
 
 	/**
@@ -120,21 +123,43 @@ export default class HighlighterPlugin extends Plugin {
 			const result = toggleHighlight(fullText, selectionStart, selectionEnd, color);
 
 			if (result.action === 'applied') {
-				// Update the editor content
-				editor.setValue(result.newText);
-
-				// Select the affected text
-				const startPos = editor.offsetToPos(result.affectedRange.start);
-				const endPos = editor.offsetToPos(result.affectedRange.end);
-				editor.setSelection(startPos, endPos);
+				this.writeResultToEditor(editor, result);
 
 				// Show success notice
 				new Notice(`Applied ${color.name} highlight`);
 			}
 		} catch (error) {
-			console.error('Failed to apply highlight:', error);
+			logError('Failed to apply highlight:', error);
 			new Notice(ERROR_MESSAGES.highlightFailed);
 		}
+	}
+
+	/**
+	 * Write a toggle result back to the editor as a minimal, incremental edit.
+	 *
+	 * Uses `replaceRange` rather than `setValue`: rewriting the whole document
+	 * discards undo history, folds and scroll position, and rebuilding the
+	 * document state on every highlight is a likely contributor to the workspace
+	 * losing track of the active editor.
+	 *
+	 * Focus is handed back to the editor afterwards because the command palette
+	 * takes focus when it opens; returning it keeps Obsidian's active-editor
+	 * tracking pointed at the editor the user is actually working in.
+	 */
+	private writeResultToEditor(editor: Editor, result: HighlightToggleResult): void {
+		editor.replaceRange(
+			result.replacement,
+			editor.offsetToPos(result.replacedRange.start),
+			editor.offsetToPos(result.replacedRange.end)
+		);
+
+		// Re-select the affected text so the user can chain operations
+		editor.setSelection(
+			editor.offsetToPos(result.affectedRange.start),
+			editor.offsetToPos(result.affectedRange.end)
+		);
+
+		editor.focus();
 	}
 
 	/**
@@ -150,19 +175,13 @@ export default class HighlighterPlugin extends Plugin {
 			const result = toggleHighlight(fullText, selectionStart, selectionEnd);
 
 			if (result.action === 'removed') {
-				// Update the editor content
-				editor.setValue(result.newText);
+				this.writeResultToEditor(editor, result);
 
-				// Select the affected text
-				const startPos = editor.offsetToPos(result.affectedRange.start);
-				const endPos = editor.offsetToPos(result.affectedRange.end);
-				editor.setSelection(startPos, endPos);
-
-				// Show success notice 
+				// Show success notice
 				new Notice('Highlight removed');
 			}
 		} catch (error) {
-			console.error('Failed to remove highlight:', error);
+			logError('Failed to remove highlight:', error);
 			new Notice('Failed to remove highlight');
 		}
 	}
@@ -193,16 +212,13 @@ export default class HighlighterPlugin extends Plugin {
 			id: 'remove-highlight',
 			name: 'Remove highlight',
 			editorCallback: (editor: Editor, view: MarkdownView | MarkdownFileInfo) => {
-				const selection = editor.getSelection();
-				if (!selection) {
+				const context = resolveEditorSelection(this.app, editor, 'remove-highlight');
+				if (!context) {
 					new Notice(ERROR_MESSAGES.selectionRequired);
 					return;
 				}
 
-				const selectionStart = editor.posToOffset(editor.getCursor('from'));
-				const selectionEnd = editor.posToOffset(editor.getCursor('to'));
-
-				this.removeHighlight(editor, selectionStart, selectionEnd);
+				this.removeHighlight(context.editor, context.selectionStart, context.selectionEnd);
 			}
 		});
 	}
@@ -227,16 +243,13 @@ export default class HighlighterPlugin extends Plugin {
 			id: this.getColorCommandId(color),
 			name: `Highlight with ${color.name}`,
 			editorCallback: (editor: Editor, view: MarkdownView | MarkdownFileInfo) => {
-				const selection = editor.getSelection();
-				if (!selection) {
+				const context = resolveEditorSelection(this.app, editor, this.getColorCommandId(color));
+				if (!context) {
 					new Notice(ERROR_MESSAGES.selectionRequired);
 					return;
 				}
 
-				const selectionStart = editor.posToOffset(editor.getCursor('from'));
-				const selectionEnd = editor.posToOffset(editor.getCursor('to'));
-
-				this.applyHighlight(editor, selectionStart, selectionEnd, color);
+				this.applyHighlight(context.editor, context.selectionStart, context.selectionEnd, color);
 			}
 		});
 	}

@@ -186,6 +186,53 @@ export function processSelectionForHighlight(
 }
 
 /**
+ * Result of a highlight toggle operation.
+ *
+ * `replacement` / `replacedRange` describe the change as a minimal edit against
+ * the *original* text, which lets callers use an incremental editor write
+ * (`replaceRange`) instead of rewriting the whole document. `newText` is the
+ * same edit already applied to the full text and is kept for callers that want
+ * the resulting document directly.
+ */
+export interface HighlightToggleResult {
+	/** Full document text after the edit. */
+	newText: string;
+	action: 'applied' | 'removed';
+	/** Bounds of the resulting text, in `newText` coordinates. */
+	affectedRange: { start: number; end: number };
+	/** The text written in place of `replacedRange`. */
+	replacement: string;
+	/** Bounds of the replaced region, in original `fullText` coordinates. */
+	replacedRange: { start: number; end: number };
+}
+
+/**
+ * Build a toggle result from a minimal edit. Both coordinate spaces are derived
+ * here from a single source of truth so they cannot drift apart.
+ */
+function buildToggleResult(
+	fullText: string,
+	expandedStart: number,
+	expandedEnd: number,
+	replacement: string,
+	action: 'applied' | 'removed'
+): HighlightToggleResult {
+	const newText =
+		fullText.substring(0, expandedStart) + replacement + fullText.substring(expandedEnd);
+
+	return {
+		newText,
+		action,
+		affectedRange: {
+			start: expandedStart,
+			end: expandedStart + replacement.length
+		},
+		replacement,
+		replacedRange: { start: expandedStart, end: expandedEnd }
+	};
+}
+
+/**
  * Applies or removes highlight based on current selection state
  */
 export function toggleHighlight(
@@ -193,70 +240,31 @@ export function toggleHighlight(
 	selectionStart: number,
 	selectionEnd: number,
 	color?: ColorDefinition
-): {
-	newText: string;
-	action: 'applied' | 'removed';
-	affectedRange: { start: number; end: number };
-} {
+): HighlightToggleResult {
 	const processed = processSelectionForHighlight(fullText, selectionStart, selectionEnd);
+	const { expandedStart, expandedEnd, selectedText, containsHighlight } = processed;
 
-	if (processed.containsHighlight && color) {
-		// Replace existing highlight with new color
-		const beforeSelection = fullText.substring(0, processed.expandedStart);
-		const afterSelection = fullText.substring(processed.expandedEnd);
-
-		// First remove the old highlight to get plain text
-		const plainText = removeHighlight(processed.selectedText);
-
-		// Then apply the new highlight with the new color
+	if (containsHighlight && color) {
+		// Replace existing highlight with new color: strip first, then re-apply
+		const plainText = removeHighlight(selectedText);
 		const highlightedText = applyHighlight(plainText, { color });
-		const newText = beforeSelection + highlightedText + afterSelection;
 
-		return {
-			newText,
-			action: 'applied',
-			affectedRange: {
-				start: processed.expandedStart,
-				end: processed.expandedStart + highlightedText.length
-			}
-		};
-	} else if (processed.containsHighlight && !color) {
+		return buildToggleResult(fullText, expandedStart, expandedEnd, highlightedText, 'applied');
+	} else if (containsHighlight && !color) {
 		// Remove existing highlight (no new color provided)
-		const beforeSelection = fullText.substring(0, processed.expandedStart);
-		const afterSelection = fullText.substring(processed.expandedEnd);
-		const plainText = removeHighlight(processed.selectedText);
+		const plainText = removeHighlight(selectedText);
 
-		const newText = beforeSelection + plainText + afterSelection;
-
-		return {
-			newText,
-			action: 'removed',
-			affectedRange: {
-				start: processed.expandedStart,
-				end: processed.expandedStart + plainText.length
-			}
-		};
-	} else if (!processed.containsHighlight && color) {
+		return buildToggleResult(fullText, expandedStart, expandedEnd, plainText, 'removed');
+	} else if (!containsHighlight && color) {
 		// Apply new highlight (no existing highlight)
-		const beforeSelection = fullText.substring(0, processed.expandedStart);
-		const afterSelection = fullText.substring(processed.expandedEnd);
-
 		// Make sure we're highlighting plain text
-		const plainText = validateNoNestedHighlights(processed.selectedText)
-			? processed.selectedText
-			: removeHighlight(processed.selectedText);
+		const plainText = validateNoNestedHighlights(selectedText)
+			? selectedText
+			: removeHighlight(selectedText);
 
 		const highlightedText = applyHighlight(plainText, { color });
-		const newText = beforeSelection + highlightedText + afterSelection;
 
-		return {
-			newText,
-			action: 'applied',
-			affectedRange: {
-				start: processed.expandedStart,
-				end: processed.expandedStart + highlightedText.length
-			}
-		};
+		return buildToggleResult(fullText, expandedStart, expandedEnd, highlightedText, 'applied');
 	} else {
 		// No color provided and no existing highlight
 		throw new Error('No color provided for highlighting');
